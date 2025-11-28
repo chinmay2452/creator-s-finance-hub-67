@@ -32,6 +32,24 @@ const Earnings = () => {
   const [summary, setSummary] = useState<string>("");
   const [totals, setTotals] = useState<AggregatorTotals | null>(null);
   const agent = useMemo(() => new IncomeAggregatorAgent(new MockDataProvider()), []);
+  const selectedPlatformNames = (() => {
+    try {
+      const p = JSON.parse(localStorage.getItem("creatorProfile") || "{}");
+      const map: Record<string, string> = {
+        instagram: "Instagram",
+        youtube: "YouTube",
+        tiktok: "TikTok",
+        snapchat: "Snapchat",
+        facebook: "Facebook",
+        linkedin: "LinkedIn",
+        x: "X",
+      };
+      return (p.platforms || []).map((key: string) => map[key]).filter(Boolean);
+    } catch {
+      return [];
+    }
+  })();
+  const filteredEarnings = selectedPlatformNames.length ? mockEarnings.filter((e) => selectedPlatformNames.includes(e.platform)) : mockEarnings;
 
   const handleExtractEmail = async () => {
     const res = await runParseEmail({ emailText, userId: "demo_user" });
@@ -122,7 +140,7 @@ const Earnings = () => {
                     </div>
                     <div>
                       <p className="text-sm text-muted-foreground">Amount</p>
-                      <p className="font-semibold text-secondary">${extractedData.amount}</p>
+                      <p className="font-semibold text-secondary">₹{extractedData.amount}</p>
                     </div>
                     <div>
                       <p className="text-sm text-muted-foreground">Due Date</p>
@@ -168,11 +186,11 @@ const Earnings = () => {
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div className="p-4 rounded-lg bg-secondary/10 border border-secondary/20">
                         <p className="text-sm text-muted-foreground">Total</p>
-                        <p className="text-2xl font-bold text-secondary">${totals.total.toLocaleString()}</p>
+                        <p className="text-2xl font-bold text-secondary">₹{totals.total.toLocaleString()}</p>
                       </div>
                       <div className="p-4 rounded-lg bg-accent/10 border border-accent/20">
                         <p className="text-sm text-muted-foreground">Pending</p>
-                        <p className="text-2xl font-bold text-accent">${totals.pending.toLocaleString()}</p>
+                        <p className="text-2xl font-bold text-accent">₹{totals.pending.toLocaleString()}</p>
                       </div>
                       <div className="p-4 rounded-lg bg-primary/10 border border-primary/20">
                         <p className="text-sm text-muted-foreground">Top Platform</p>
@@ -264,7 +282,8 @@ const Earnings = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {mockEarnings.map((earning, index) => (
+                  {/** filtered below based on selected platforms */}
+                  {filteredEarnings.map((earning, index) => (
                     <motion.tr
                       key={earning.id}
                       initial={{ opacity: 0, x: -20 }}
@@ -281,7 +300,7 @@ const Earnings = () => {
                         <Badge variant="secondary">{earning.category}</Badge>
                       </TableCell>
                       <TableCell>
-                        <span className="font-bold text-secondary">${earning.amount}</span>
+                        <span className="font-bold text-secondary">₹{earning.amount}</span>
                       </TableCell>
                       <TableCell>
                         <Badge

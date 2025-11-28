@@ -5,7 +5,7 @@ const transactions = [
   {
     id: 1,
     platform: "YouTube",
-    amount: "$1,250",
+    amount: "₹1,250",
     status: "Received",
     date: "Nov 25, 2025",
     logo: "🎥",
@@ -13,7 +13,7 @@ const transactions = [
   {
     id: 2,
     platform: "Instagram",
-    amount: "$890",
+    amount: "₹890",
     status: "Pending",
     date: "Nov 24, 2025",
     logo: "📸",
@@ -21,7 +21,7 @@ const transactions = [
   {
     id: 3,
     platform: "Brand Deal",
-    amount: "$3,500",
+    amount: "₹3,500",
     status: "Received",
     date: "Nov 23, 2025",
     logo: "🤝",
@@ -29,7 +29,7 @@ const transactions = [
   {
     id: 4,
     platform: "Freelancing",
-    amount: "$620",
+    amount: "₹620",
     status: "Received",
     date: "Nov 22, 2025",
     logo: "💼",
@@ -37,6 +37,24 @@ const transactions = [
 ];
 
 export const TransactionsTable = () => {
+  const selectedPlatformNames = (() => {
+    try {
+      const p = JSON.parse(localStorage.getItem("creatorProfile") || "{}");
+      const map: Record<string, string> = {
+        instagram: "Instagram",
+        youtube: "YouTube",
+        tiktok: "TikTok",
+        snapchat: "Snapchat",
+        facebook: "Facebook",
+        linkedin: "LinkedIn",
+        x: "X",
+      };
+      return (p.platforms || []).map((key: string) => map[key]).filter(Boolean);
+    } catch {
+      return [];
+    }
+  })();
+  const filtered = selectedPlatformNames.length ? transactions.filter((t) => selectedPlatformNames.includes(t.platform)) : transactions;
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -58,7 +76,7 @@ export const TransactionsTable = () => {
             </tr>
           </thead>
           <tbody>
-            {transactions.map((transaction, index) => (
+            {filtered.map((transaction, index) => (
               <motion.tr
                 key={transaction.id}
                 initial={{ opacity: 0, x: -20 }}

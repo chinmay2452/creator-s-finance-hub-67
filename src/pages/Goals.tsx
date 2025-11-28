@@ -147,18 +147,18 @@ const Goals = () => {
                       <div className="grid grid-cols-2 gap-4 pt-4 border-t border-border">
                         <div>
                           <p className="text-xs text-muted-foreground mb-1">Current</p>
-                          <p className="text-lg font-bold text-secondary">${goal.current.toLocaleString()}</p>
+                          <p className="text-lg font-bold text-secondary">₹{goal.current.toLocaleString()}</p>
                         </div>
                         <div>
                           <p className="text-xs text-muted-foreground mb-1">Target</p>
-                          <p className="text-lg font-bold text-foreground">${goal.target.toLocaleString()}</p>
+                          <p className="text-lg font-bold text-foreground">₹{goal.target.toLocaleString()}</p>
                         </div>
                       </div>
 
                       {/* Remaining */}
                       <div className="pt-2">
                         <p className="text-sm text-muted-foreground">
-                          ${(goal.target - goal.current).toLocaleString()} remaining to reach your goal
+                          ₹{(goal.target - goal.current).toLocaleString()} remaining to reach your goal
                         </p>
                       </div>
                     </div>
@@ -196,7 +196,7 @@ const Goals = () => {
                         <p className="font-semibold text-foreground">Camera Fund - 41% Complete</p>
                         <span className="text-xs text-muted-foreground">Jan 2025</span>
                       </div>
-                      <p className="text-sm text-muted-foreground">Added $2,500 from YouTube sponsorship</p>
+                      <p className="text-sm text-muted-foreground">Added ₹2,500 from YouTube sponsorship</p>
                     </div>
                   </div>
 

@@ -9,6 +9,24 @@ const data = [
 ];
 
 export const IncomeDistribution = () => {
+  const selectedPlatformNames = (() => {
+    try {
+      const p = JSON.parse(localStorage.getItem("creatorProfile") || "{}");
+      const map: Record<string, string> = {
+        instagram: "Instagram",
+        youtube: "YouTube",
+        tiktok: "TikTok",
+        snapchat: "Snapchat",
+        facebook: "Facebook",
+        linkedin: "LinkedIn",
+        x: "X",
+      };
+      return (p.platforms || []).map((key: string) => map[key]).filter(Boolean);
+    } catch {
+      return [];
+    }
+  })();
+  const chartData = selectedPlatformNames.length ? data.filter((d) => selectedPlatformNames.includes(d.name)) : data;
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -21,7 +39,7 @@ export const IncomeDistribution = () => {
       <ResponsiveContainer width="100%" height={300}>
         <PieChart>
           <Pie
-            data={data}
+            data={chartData}
             cx="50%"
             cy="50%"
             innerRadius={60}
@@ -29,7 +47,7 @@ export const IncomeDistribution = () => {
             paddingAngle={5}
             dataKey="value"
           >
-            {data.map((entry, index) => (
+            {chartData.map((entry, index) => (
               <Cell key={`cell-${index}`} fill={entry.color} />
             ))}
           </Pie>

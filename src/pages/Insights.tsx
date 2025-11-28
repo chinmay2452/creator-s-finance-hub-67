@@ -198,15 +198,15 @@ const Insights = () => {
                 <div className="flex items-start gap-3 p-4 rounded-lg bg-primary/5 border border-primary/20">
                   <TrendingUp className="w-5 h-5 text-primary mt-0.5" />
                   <div>
-                    <p className="font-semibold text-foreground">Forecast Snapshot</p>
-                    <p className="text-sm text-muted-foreground">30d: ${forecast ? Math.round(forecast.d30).toLocaleString() : "—"}, 90d: ${forecast ? Math.round(forecast.d90).toLocaleString() : "—"}, 1y: ${forecast ? Math.round(forecast.d365).toLocaleString() : "—"}</p>
+                    <p className="text-sm text-muted-foreground">Forecast Snapshot</p>
+                    <p className="text-sm text-muted-foreground">30d: ₹{forecast ? Math.round(forecast.d30).toLocaleString() : "—"}, 90d: ₹{forecast ? Math.round(forecast.d90).toLocaleString() : "—"}, 1y: ₹{forecast ? Math.round(forecast.d365).toLocaleString() : "—"}</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3 p-4 rounded-lg bg-secondary/5 border border-secondary/20">
                   <Target className="w-5 h-5 text-secondary mt-0.5" />
                   <div>
                     <p className="font-semibold text-foreground">Tax Estimation</p>
-                    <p className="text-sm text-muted-foreground">Taxable: ${tax ? Math.round(tax.taxableIncome).toLocaleString() : "—"}; Est. Tax: ${tax ? Math.round(tax.estimatedTax).toLocaleString() : "—"}; Deductions: ${tax ? Math.round(tax.deductions).toLocaleString() : "—"}</p>
+                    <p className="text-sm text-muted-foreground">Taxable: ₹{tax ? Math.round(tax.taxableIncome).toLocaleString() : "—"}; Est. Tax: ₹{tax ? Math.round(tax.estimatedTax).toLocaleString() : "—"}; Deductions: ₹{tax ? Math.round(tax.deductions).toLocaleString() : "—"}</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3 p-4 rounded-lg bg-accent/5 border border-accent/20">

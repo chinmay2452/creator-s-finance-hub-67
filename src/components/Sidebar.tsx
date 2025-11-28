@@ -1,4 +1,4 @@
-import { LayoutDashboard, DollarSign, TrendingUp, Bot, Target, Settings } from "lucide-react";
+import { LayoutDashboard, DollarSign, TrendingUp, Bot, Target, Settings, Store } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { motion } from "framer-motion";
 
@@ -8,6 +8,7 @@ const navItems = [
   { icon: TrendingUp, label: "Insights", path: "/insights" },
   { icon: Bot, label: "AI Money Buddy", path: "/ai-buddy" },
   { icon: Target, label: "Goals", path: "/goals" },
+  { icon: Store, label: "Marketplace", path: "/marketplace" },
   { icon: Settings, label: "Settings", path: "/settings" },
 ];
 
