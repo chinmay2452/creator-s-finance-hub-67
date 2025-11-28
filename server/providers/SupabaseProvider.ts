@@ -1,7 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 import { AccountConnection, DataProvider, ExpenseEntry, IncomeEntry, Notifier, StorageProvider, ToneRewriter, VisionProvider } from "../src/agents/types";
-
-const supabase = createClient(process.env.SUPABASE_URL as string, process.env.SUPABASE_SERVICE_ROLE_KEY as string);
+import { SUPABASE_URL, SUPABASE_KEY } from "../config";
+const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 export class SupabaseDataProvider implements DataProvider {
   async listAccounts(): Promise<AccountConnection[]> {
