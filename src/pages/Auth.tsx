@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/components/ui/select";
 import { motion } from "framer-motion";
+import { supabase } from "@/lib/supabaseClient";
 
 const roles = [
   { value: "influencer", label: "Influencer" },
@@ -29,6 +30,7 @@ const Auth = () => {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [role, setRole] = useState<string>(roles[0].value);
   const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([]);
   const navigate = useNavigate();
@@ -38,12 +40,30 @@ const Auth = () => {
   };
 
   const canContinue = () => {
-    return name.trim() !== "" && email.trim() !== "" && phone.trim() !== "" && role.trim() !== "";
+    return name.trim() !== "" && email.trim() !== "" && phone.trim() !== "" && role.trim() !== "" && password.trim().length >= 6;
   };
 
-  const finish = () => {
+  const finish = async () => {
+    const authEmail = email.trim();
+    const authPassword = password.trim();
+    let userId: string | null = null;
+    const signUp = await supabase.auth.signUp({ email: authEmail, password: authPassword });
+    if (signUp.error && signUp.error.message?.toLowerCase().includes("already")) {
+      const signIn = await supabase.auth.signInWithPassword({ email: authEmail, password: authPassword });
+      if (signIn.error) {
+        alert(`Login failed: ${signIn.error.message}`);
+        return;
+      }
+      userId = signIn.data.user?.id || null;
+    } else {
+      userId = signUp.data.user?.id || null;
+    }
+    if (!userId) {
+      alert("Authentication failed. Please try again.");
+      return;
+    }
     const profile = { name, phone, email, role, platforms: selectedPlatforms };
-    localStorage.setItem("creatorProfile", JSON.stringify(profile));
+    await supabase.from("profiles").upsert({ user_id: userId, display_name: name, goals: profile }, { onConflict: "user_id" });
     navigate("/");
   };
 
@@ -71,6 +91,10 @@ const Auth = () => {
                 <div className="space-y-2">
                   <Label htmlFor="email">Email</Label>
                   <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email address" />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="password">Password</Label>
+                  <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="At least 6 characters" />
                 </div>
                 <div className="space-y-2">
                   <Label>Role</Label>
