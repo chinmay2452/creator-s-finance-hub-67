@@ -18,7 +18,8 @@ export const parseEmailLLM = async (text: string) => {
     }),
   });
   if (!resp.ok) return null;
-  const json = (await resp.json()) as any;
+  type GroqChatCompletionResponse = { choices?: Array<{ message?: { content?: string } }> };
+  const json = (await resp.json()) as GroqChatCompletionResponse;
   const raw = json?.choices?.[0]?.message?.content || "{}";
   const data = JSON.parse(raw);
   const found = ["amount", "dueDate", "brand"].reduce((s, k) => (data?.[k] ? s + 1 : s), 0);
