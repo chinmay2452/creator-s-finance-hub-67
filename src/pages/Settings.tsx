@@ -11,15 +11,42 @@ import { motion } from "framer-motion";
 import { User, Bell, Link as LinkIcon, Shield, Download, Trash2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
-const connectedAccounts = [
-  { platform: "YouTube", status: "Connected", icon: "🎥", color: "bg-red-500/20 text-red-500" },
-  { platform: "Instagram", status: "Connected", icon: "📸", color: "bg-pink-500/20 text-pink-500" },
-  { platform: "Razorpay", status: "Connected", icon: "💳", color: "bg-blue-500/20 text-blue-500" },
-  { platform: "PayPal", status: "Disconnected", icon: "💰", color: "bg-gray-500/20 text-gray-500" },
-  { platform: "Gmail", status: "Connected", icon: "📧", color: "bg-green-500/20 text-green-500" },
+import { useEffect, useMemo, useState } from "react";
+
+const basePlatforms = [
+  { platform: "YouTube", icon: "🎥", color: "bg-red-500/20 text-red-500" },
+  { platform: "Instagram", icon: "📸", color: "bg-pink-500/20 text-pink-500" },
+  { platform: "Razorpay", icon: "💳", color: "bg-blue-500/20 text-blue-500" },
+  { platform: "PayPal", icon: "💰", color: "bg-gray-500/20 text-gray-500" },
+  { platform: "Gmail", icon: "📧", color: "bg-green-500/20 text-green-500" },
 ];
 
 const Settings = () => {
+  const [linked, setLinked] = useState<Array<{ platform: string; accountId: string; displayName: string }>>([]);
+
+  const accounts = useMemo(() => {
+    const byPlatform = Object.fromEntries(linked.map((a) => [a.platform, a]));
+    return basePlatforms.map((p) => ({
+      platform: p.platform,
+      icon: p.icon,
+      color: p.color,
+      status: byPlatform[p.platform] ? "Connected" : "Disconnected",
+      displayName: byPlatform[p.platform]?.displayName,
+    }));
+  }, [linked]);
+
+  useEffect(() => {
+    const raw = localStorage.getItem("linkedAccounts");
+    setLinked(raw ? (JSON.parse(raw) as Array<{ platform: string; accountId: string; displayName: string }>) : []);
+  }, []);
+
+  const handleDisconnect = (platform: string) => {
+    const next = linked.filter((a) => a.platform !== platform);
+    localStorage.setItem("linkedAccounts", JSON.stringify(next));
+    setLinked(next);
+    toast({ title: `${platform} disconnected`, description: "Account link removed." });
+  };
+
   const handleSave = () => {
     toast({
       title: "Settings Saved! ✅",
@@ -151,7 +178,7 @@ const Settings = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {connectedAccounts.map((account, index) => (
+                  {accounts.map((account, index) => (
                     <div key={index}>
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
@@ -160,6 +187,7 @@ const Settings = () => {
                           </div>
                           <div>
                             <p className="font-semibold text-foreground">{account.platform}</p>
+                            {account.displayName && <p className="text-xs text-muted-foreground">{account.displayName}</p>}
                             <Badge
                               variant={account.status === "Connected" ? "default" : "outline"}
                               className={account.status === "Connected" ? "bg-secondary/20 text-secondary" : ""}
@@ -169,6 +197,7 @@ const Settings = () => {
                           </div>
                         </div>
                         <Button
+                          onClick={() => (account.status === "Connected" ? handleDisconnect(account.platform) : toast({ title: "Connect from Dashboard", description: "Use 'Connect Accounts' on the Dashboard to link." }))}
                           variant={account.status === "Connected" ? "outline" : "default"}
                           size="sm"
                           className={account.status === "Connected" ? "" : "bg-gradient-to-r from-primary to-secondary"}
@@ -176,7 +205,7 @@ const Settings = () => {
                           {account.status === "Connected" ? "Disconnect" : "Connect"}
                         </Button>
                       </div>
-                      {index < connectedAccounts.length - 1 && <Separator className="mt-4" />}
+                      {index < accounts.length - 1 && <Separator className="mt-4" />}
                     </div>
                   ))}
                 </div>
