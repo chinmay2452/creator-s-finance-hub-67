@@ -28,6 +28,7 @@ type AggregatorTotals = { byPlatform: Record<string, number>; total: number; pen
 
 const Earnings = () => {
   const [emailText, setEmailText] = useState("");
+  const [isParsing, setIsParsing] = useState(false);
   const [extractedData, setExtractedData] = useState<{ brand: string; amount: number; dueDate: string; status: string } | null>(null);
   const [summary, setSummary] = useState<string>("");
   const [totals, setTotals] = useState<AggregatorTotals | null>(null);
@@ -52,24 +53,32 @@ const Earnings = () => {
   const filteredEarnings = selectedPlatformNames.length ? mockEarnings.filter((e) => selectedPlatformNames.includes(e.platform)) : mockEarnings;
 
   const handleExtractEmail = async () => {
-    const res = await runParseEmail({ emailText, userId: "demo_user" });
-    const parsed = res?.data as { brand?: string; amount?: number; dueDate?: string; status?: string; confidence: number };
-    setExtractedData(
-      parsed && (parsed.amount || parsed.brand || parsed.dueDate)
-        ? {
-            brand: parsed.brand || "Unknown",
-            amount: parsed.amount || 0,
-            dueDate: parsed.dueDate || "Unknown",
-            status: parsed.status || "Pending",
-          }
-        : null,
-    );
-    if (parsed?.confidence && parsed.confidence >= 0.98) {
-      toast({ title: "Email Parsed Successfully! 📧", description: "AI high-confidence extraction" });
-    } else if (parsed?.confidence && parsed.confidence >= 0.8) {
-      toast({ title: "Email Parsed", description: "AI medium-confidence extraction" });
-    } else {
-      toast({ title: "Low Confidence", description: "Try refining the email content" });
+    if (!emailText.trim() || isParsing) return;
+    setIsParsing(true);
+    try {
+      const res = await runParseEmail({ emailText, userId: "demo_user" });
+      const parsed = res?.data as { brand?: string; amount?: number; dueDate?: string; status?: string; confidence: number };
+      setExtractedData(
+        parsed && (parsed.amount || parsed.brand || parsed.dueDate)
+          ? {
+              brand: parsed.brand || "Unknown",
+              amount: parsed.amount || 0,
+              dueDate: parsed.dueDate || "Unknown",
+              status: parsed.status || "Pending",
+            }
+          : null,
+      );
+      if (parsed?.confidence && parsed.confidence >= 0.98) {
+        toast({ title: "Email Parsed Successfully! 📧", description: "AI high-confidence extraction" });
+      } else if (parsed?.confidence && parsed.confidence >= 0.8) {
+        toast({ title: "Email Parsed", description: "AI medium-confidence extraction" });
+      } else {
+        toast({ title: "Low Confidence", description: "Try refining the email content" });
+      }
+    } catch (e) {
+      toast({ title: "Parsing Failed", description: "Server error while parsing email" });
+    } finally {
+      setIsParsing(false);
     }
   };
 
@@ -123,9 +132,9 @@ const Earnings = () => {
                   onChange={(e) => setEmailText(e.target.value)}
                   className="min-h-[120px] bg-background/50"
                 />
-                <Button onClick={handleExtractEmail} className="bg-gradient-to-r from-primary to-secondary">
+                <Button onClick={handleExtractEmail} disabled={!emailText.trim() || isParsing} className="bg-gradient-to-r from-primary to-secondary">
                   <Upload className="w-4 h-4 mr-2" />
-                  Parse Email
+                  {isParsing ? "Parsing..." : "Parse Email"}
                 </Button>
 
                 {extractedData && (

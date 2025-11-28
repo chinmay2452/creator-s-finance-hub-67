@@ -7,7 +7,7 @@ const accounts: AccountConnection[] = [
 ];
 
 const income: IncomeEntry[] = [
-  { id: "i1", platform: "YouTube", amount: 8450, currency: "USD", date: "2025-10-28", status: "paid" },
+  { id: "i1", platform: "YouTube", amount: 8450, currency: "INR", date: "2025-10-28", status: "paid" },
   { id: "i2", platform: "YouTube", amount: 9200, currency: "USD", date: "2025-11-05", status: "paid" },
   { id: "i3", platform: "Twitch", amount: 3100, currency: "USD", date: "2025-11-20", status: "pending" },
   { id: "i4", platform: "Patreon", amount: 2200, currency: "USD", date: "2025-11-25", status: "paid" },
