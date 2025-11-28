@@ -45,5 +45,31 @@ export class MockDataProvider implements DataProvider {
       return true;
     });
   }
+
+  getIncomeData() {
+    return [
+      {
+        platform: "YouTube",
+        amount: 8500,
+        currency: "INR",
+        month: "January",
+        status: "received",
+      },
+      {
+        platform: "Instagram",
+        amount: 12400,
+        currency: "INR",
+        month: "January",
+        status: "received",
+      },
+      {
+        platform: "Nike Brand Deal",
+        amount: 4200,
+        currency: "INR",
+        month: "January",
+        status: "pending",
+      },
+    ];
+  }
 }
 
