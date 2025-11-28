@@ -4,6 +4,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { motion } from "framer-motion";
 import { TrendingUp, Target, AlertCircle, Sparkles } from "lucide-react";
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
+import { useMemo, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { FinanceIntelAgent } from "@/agents/FinanceIntel";
+import { MockDataProvider } from "@/tools/MockDataProvider";
 
 const growthData = [
   { month: "Jul", growth: 5 },
@@ -22,7 +26,12 @@ const categoryData = [
   { category: "Affiliate", amount: 3500 },
 ];
 
+type Forecast = { d30: number; d90: number; d365: number };
 const Insights = () => {
+  const [forecast, setForecast] = useState<Forecast | null>(null);
+  const [risk, setRisk] = useState<string[]>([]);
+  const [tax, setTax] = useState<{ taxableIncome: number; estimatedTax: number; deductions: number } | null>(null);
+  const agent = useMemo(() => new FinanceIntelAgent(new MockDataProvider()), []);
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
@@ -55,7 +64,7 @@ const Insights = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-3xl font-bold text-secondary">+28%</div>
+                <div className="text-3xl font-bold text-secondary">{forecast ? `~${Math.round((forecast.d90 / forecast.d30 - 1) * 100)}%` : "+28%"}</div>
                 <p className="text-sm text-muted-foreground mt-2">Month over month increase</p>
               </CardContent>
             </Card>
@@ -74,7 +83,7 @@ const Insights = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-3xl font-bold text-primary">YouTube</div>
+                <div className="text-3xl font-bold text-primary">{risk.length ? `Risk: ${risk[0]}` : "YouTube"}</div>
                 <p className="text-sm text-muted-foreground mt-2">Highest revenue source</p>
               </CardContent>
             </Card>
@@ -93,7 +102,7 @@ const Insights = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-3xl font-bold text-accent">94%</div>
+                <div className="text-3xl font-bold text-accent">{tax ? `${Math.round((1 - tax.estimatedTax / Math.max(1, tax.taxableIncome)) * 100)}%` : "94%"}</div>
                 <p className="text-sm text-muted-foreground mt-2">Prediction accuracy</p>
               </CardContent>
             </Card>
@@ -189,22 +198,22 @@ const Insights = () => {
                 <div className="flex items-start gap-3 p-4 rounded-lg bg-primary/5 border border-primary/20">
                   <TrendingUp className="w-5 h-5 text-primary mt-0.5" />
                   <div>
-                    <p className="font-semibold text-foreground">Focus on YouTube</p>
-                    <p className="text-sm text-muted-foreground">Your YouTube content has 35% higher engagement. Consider increasing upload frequency.</p>
+                    <p className="font-semibold text-foreground">Forecast Snapshot</p>
+                    <p className="text-sm text-muted-foreground">30d: ${forecast ? Math.round(forecast.d30).toLocaleString() : "—"}, 90d: ${forecast ? Math.round(forecast.d90).toLocaleString() : "—"}, 1y: ${forecast ? Math.round(forecast.d365).toLocaleString() : "—"}</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3 p-4 rounded-lg bg-secondary/5 border border-secondary/20">
                   <Target className="w-5 h-5 text-secondary mt-0.5" />
                   <div>
-                    <p className="font-semibold text-foreground">Diversify Income</p>
-                    <p className="text-sm text-muted-foreground">Add 2-3 more freelancing clients to reduce dependency on brand deals.</p>
+                    <p className="font-semibold text-foreground">Tax Estimation</p>
+                    <p className="text-sm text-muted-foreground">Taxable: ${tax ? Math.round(tax.taxableIncome).toLocaleString() : "—"}; Est. Tax: ${tax ? Math.round(tax.estimatedTax).toLocaleString() : "—"}; Deductions: ${tax ? Math.round(tax.deductions).toLocaleString() : "—"}</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3 p-4 rounded-lg bg-accent/5 border border-accent/20">
                   <AlertCircle className="w-5 h-5 text-accent mt-0.5" />
                   <div>
-                    <p className="font-semibold text-foreground">Payment Follow-up</p>
-                    <p className="text-sm text-muted-foreground">3 pending payments over 15 days old. Send follow-up reminders.</p>
+                    <p className="font-semibold text-foreground">Risky Months</p>
+                    <p className="text-sm text-muted-foreground">{risk.length ? risk.join(", ") : "No risks detected"}</p>
                   </div>
                 </div>
               </div>
@@ -217,3 +226,23 @@ const Insights = () => {
 };
 
 export default Insights;
+        {/* Run AI Button */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.05 }}
+          className="mb-6"
+        >
+          <Button
+            onClick={async () => {
+              const res = await agent.run({ userId: "demo" });
+              const d = res.data as { forecast: Forecast; tax: { taxableIncome: number; estimatedTax: number; deductions: number }; risk: string[] };
+              setForecast(d.forecast);
+              setTax(d.tax);
+              setRisk(d.risk);
+            }}
+            className="bg-gradient-to-r from-primary to-secondary"
+          >
+            Run AI Insights
+          </Button>
+        </motion.div>

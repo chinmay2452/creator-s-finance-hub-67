@@ -6,6 +6,8 @@ import { Input } from "@/components/ui/input";
 import { motion } from "framer-motion";
 import { Send, Mic, TrendingUp, DollarSign, Clock, Target } from "lucide-react";
 import { useState } from "react";
+import { MoneyBuddyAgent } from "@/agents/MoneyBuddy";
+import { MockDataProvider } from "@/tools/MockDataProvider";
 
 const suggestions = [
   { icon: DollarSign, text: "Show my income summary", color: "text-primary" },
@@ -27,7 +29,7 @@ const AIBuddy = () => {
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
 
-  const handleSend = () => {
+  const handleSend = async () => {
     if (!input.trim()) return;
 
     const userMessage = {
@@ -39,17 +41,15 @@ const AIBuddy = () => {
     setMessages([...messages, userMessage]);
     setInput("");
     setIsTyping(true);
-
-    // Simulate AI response
-    setTimeout(() => {
-      const aiResponse = {
-        role: "assistant",
-        content: "Based on your current earnings trajectory and historical data, I predict your income for next month will be around $28,450 with a confidence of 94%. This represents a 24.5% increase from this month! 📈",
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-      };
-      setMessages(prev => [...prev, aiResponse]);
-      setIsTyping(false);
-    }, 1500);
+    const agent = new MoneyBuddyAgent({ provider: new MockDataProvider() });
+    const res = await agent.run({ userId: "demo_user", query: input });
+    const aiResponse = {
+      role: "assistant",
+      content: res.text,
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    };
+    setMessages(prev => [...prev, aiResponse]);
+    setIsTyping(false);
   };
 
   const handleSuggestion = (text: string) => {
