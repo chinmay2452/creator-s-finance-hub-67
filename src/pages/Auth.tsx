@@ -59,11 +59,15 @@ const Auth = () => {
       userId = signUp.data.user?.id || null;
     }
     if (!userId) {
-      alert("Authentication failed. Please try again.");
-      return;
+      alert("Authentication failed or Supabase not configured. Saving local profile.");
     }
     const profile = { name, phone, email, role, platforms: selectedPlatforms };
-    await supabase.from("profiles").upsert({ user_id: userId, display_name: name, goals: profile }, { onConflict: "user_id" });
+    try {
+      await supabase.from("profiles").upsert({ user_id: userId, display_name: name, goals: profile }, { onConflict: "user_id" });
+    } catch {}
+    try {
+      localStorage.setItem("creatorProfile", JSON.stringify(profile));
+    } catch {}
     navigate("/");
   };
 

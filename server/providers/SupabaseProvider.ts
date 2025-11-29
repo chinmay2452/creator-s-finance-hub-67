@@ -1,7 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
-import { AccountConnection, DataProvider, ExpenseEntry, IncomeEntry, Notifier, StorageProvider, ToneRewriter, VisionProvider } from "../src/agents/types";
-import { SUPABASE_URL, SUPABASE_KEY } from "../config";
-const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+import { AccountConnection, DataProvider, ExpenseEntry, IncomeEntry, Notifier, StorageProvider, ToneRewriter, VisionProvider } from "../../src/agents/types.ts";
+import { SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, hasSupabase } from "../config";
+const supabase = hasSupabase ? createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY) : undefined as unknown as ReturnType<typeof createClient>;
 
 export class SupabaseDataProvider implements DataProvider {
   async listAccounts(): Promise<AccountConnection[]> {
@@ -53,7 +53,7 @@ export class SupabaseVision implements VisionProvider {
 export class SupabaseSaver {
   async saveIncome(args: { userId: string; amount: number; source: string; timestamp: string }) {
     const { data } = await supabase.from("income_streams").insert({ user_id: args.userId, amount: args.amount, platform: args.source, date: args.timestamp, currency: "USD", status: "paid" }).select("id").single();
-    return { id: data.id };
+    return { id: (data || {}).id || "" };
   }
   async detectDuplicate(args: { userId: string; source: string; timestamp: string }) {
     const { data } = await supabase.from("income_streams").select("id").eq("user_id", args.userId).eq("platform", args.source).eq("date", args.timestamp).limit(1);

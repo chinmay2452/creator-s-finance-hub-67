@@ -5,7 +5,6 @@ import bodyParser from "body-parser";
 import { MoneyBuddyAgent } from "../src/agents/MoneyBuddy";
 import { IncomeSyncAgent } from "../src/agents/IncomeSync";
 import { FinanceIntelAgent } from "../src/agents/FinanceIntel";
-import { SupabaseDataProvider, SupabaseNotifier, SupabaseStorage, SupabaseVision, SupabaseSaver } from "./providers/SupabaseProvider";
 import { parseEmailLLM } from "./providers/LLMEmailParser";
 import { parseEmailPaymentDetails } from "../src/utils/emailParser";
 
@@ -14,13 +13,26 @@ app.use(bodyParser.json());
 
 app.post("/api/money-buddy/run", async (req, res) => {
   const { userId, query } = req.body || {};
-  const agent = new MoneyBuddyAgent({ provider: new SupabaseDataProvider(), notifier: new SupabaseNotifier() });
+  const { hasSupabase } = await import("./config");
+  const provider = hasSupabase
+    ? new (await import("./providers/SupabaseProvider")).SupabaseDataProvider()
+    : new (await import("../src/tools/MockDataProvider")).MockDataProvider();
+  const notifier = hasSupabase
+    ? new (await import("./providers/SupabaseProvider")).SupabaseNotifier()
+    : { write: async () => {} };
+  const agent = new MoneyBuddyAgent({ provider, notifier });
   const result = await agent.run({ userId, query });
   res.json(result);
 });
 
 app.post("/api/income-sync/run", async (req, res) => {
   const { userId, since } = req.body || {};
+  const { hasSupabase } = await import("./config");
+  if (!hasSupabase) {
+    res.json({ text: "Supabase not configured", data: { saved: [] }, steps: [] });
+    return;
+  }
+  const { SupabaseStorage, SupabaseVision, SupabaseSaver } = await import("./providers/SupabaseProvider");
   const agent = new IncomeSyncAgent({
     storage: new SupabaseStorage(),
     vision: new SupabaseVision(),
@@ -33,7 +45,11 @@ app.post("/api/income-sync/run", async (req, res) => {
 
 app.post("/api/finance-intel/run", async (req, res) => {
   const { userId } = req.body || {};
-  const agent = new FinanceIntelAgent(new SupabaseDataProvider());
+  const { hasSupabase } = await import("./config");
+  const provider = hasSupabase
+    ? new (await import("./providers/SupabaseProvider")).SupabaseDataProvider()
+    : new (await import("../src/tools/MockDataProvider")).MockDataProvider();
+  const agent = new FinanceIntelAgent(provider);
   const result = await agent.run({ userId });
   res.json(result);
 });
