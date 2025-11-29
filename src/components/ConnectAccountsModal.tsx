@@ -13,12 +13,15 @@ import { Label } from "@/components/ui/label";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "@/hooks/use-toast";
 
-const platforms = [
-  { name: "YouTube", icon: "🎥", color: "from-red-500 to-red-600" },
-  { name: "Instagram", icon: "📸", color: "from-pink-500 to-purple-600" },
-  { name: "Razorpay", icon: "💳", color: "from-blue-500 to-blue-600" },
-  { name: "PayPal", icon: "💰", color: "from-blue-400 to-blue-500" },
-];
+const platformMap: Record<string, { name: string; icon: string; color: string }> = {
+  youtube: { name: "YouTube", icon: "🎥", color: "from-red-500 to-red-600" },
+  instagram: { name: "Instagram", icon: "📸", color: "from-pink-500 to-purple-600" },
+  tiktok: { name: "TikTok", icon: "🎵", color: "from-gray-900 to-gray-700" },
+  snapchat: { name: "Snapchat", icon: "👻", color: "from-yellow-400 to-yellow-500" },
+  facebook: { name: "Facebook", icon: "📘", color: "from-blue-600 to-blue-700" },
+  linkedin: { name: "LinkedIn", icon: "💼", color: "from-blue-700 to-blue-800" },
+  x: { name: "X", icon: "✖️", color: "from-black to-gray-700" },
+};
 
 type FormState = {
   username?: string;
@@ -35,6 +38,16 @@ export const ConnectAccountsModal = () => {
   const [selected, setSelected] = useState<string | null>(null);
   const [form, setForm] = useState<FormState>({});
   const [submitting, setSubmitting] = useState(false);
+  const platforms = useMemo(() => {
+    try {
+      const p = JSON.parse(localStorage.getItem("creatorProfile") || "{}");
+      const picked: string[] = Array.isArray(p.platforms) ? p.platforms : [];
+      const list = picked.map((key) => platformMap[key]).filter(Boolean);
+      return list.length ? list : [platformMap.youtube, platformMap.instagram];
+    } catch {
+      return [platformMap.youtube, platformMap.instagram];
+    }
+  }, []);
 
   const displayFields = useMemo(() => {
     switch (selected) {
@@ -47,6 +60,31 @@ export const ConnectAccountsModal = () => {
       case "Instagram":
         return [
           { key: "username", label: "Username", type: "text", required: true },
+          { key: "password", label: "Password", type: "password", required: true },
+        ];
+      case "TikTok":
+        return [
+          { key: "username", label: "Username", type: "text", required: true },
+          { key: "password", label: "Password", type: "password", required: true },
+        ];
+      case "X":
+        return [
+          { key: "username", label: "Handle", type: "text", required: true },
+          { key: "password", label: "Password", type: "password", required: true },
+        ];
+      case "Snapchat":
+        return [
+          { key: "username", label: "Username", type: "text", required: true },
+          { key: "password", label: "Password", type: "password", required: true },
+        ];
+      case "Facebook":
+        return [
+          { key: "email", label: "Email", type: "email", required: true },
+          { key: "password", label: "Password", type: "password", required: true },
+        ];
+      case "LinkedIn":
+        return [
+          { key: "email", label: "Email", type: "email", required: true },
           { key: "password", label: "Password", type: "password", required: true },
         ];
       case "Razorpay":

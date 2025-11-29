@@ -1,13 +1,18 @@
+import * as React from "react";
 import { Navbar } from "@/components/Navbar";
 import { Sidebar } from "@/components/Sidebar";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { motion } from "framer-motion";
 import { Plus, Camera, Users, Laptop, TrendingUp, Target } from "lucide-react";
 
-const goals = [
+const defaultGoals = [
   {
     id: 1,
     icon: Camera,
@@ -50,7 +55,51 @@ const goals = [
   },
 ];
 
+const iconMap = { camera: Camera, users: Users, laptop: Laptop, trending: TrendingUp } as const;
+
 const Goals = () => {
+  const [open, setOpen] = React.useState(false);
+  type Goal = {
+    id: number;
+    title: string;
+    target: number;
+    current: number;
+    category: string;
+    status: string;
+    color: "primary" | "secondary" | "accent";
+    iconKey?: keyof typeof iconMap;
+    icon?: React.ComponentType<unknown>;
+  };
+  const [goals, setGoals] = React.useState<Goal[]>(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem("creatorGoals") || "null");
+      if (Array.isArray(saved) && saved.length) return saved;
+    } catch (_e) { void 0; }
+    return defaultGoals;
+  });
+  const [newGoal, setNewGoal] = React.useState<Omit<Goal, "id">>({
+    title: "",
+    target: 0,
+    current: 0,
+    category: "Equipment",
+    status: "In Progress",
+    color: "primary",
+    iconKey: "camera",
+  });
+
+  const saveGoals = (list: Goal[]) => {
+    setGoals(list);
+    try { localStorage.setItem("creatorGoals", JSON.stringify(list)); } catch (_e) { void 0; }
+  };
+
+  const addGoal = () => {
+    if (!newGoal.title || newGoal.target <= 0) return;
+    const g = { id: Date.now(), ...newGoal };
+    const next = [...goals, g];
+    saveGoals(next);
+    setOpen(false);
+    setNewGoal({ title: "", target: 0, current: 0, category: "Equipment", status: "In Progress", color: "primary", iconKey: "camera" });
+  };
   const getProgressColor = (percentage: number) => {
     if (percentage >= 70) return "bg-secondary";
     if (percentage >= 40) return "bg-primary";
@@ -74,17 +123,100 @@ const Goals = () => {
             </h1>
             <p className="text-muted-foreground">Track your financial milestones and dreams</p>
           </div>
-          <Button className="bg-gradient-to-r from-primary to-secondary gap-2">
-            <Plus className="w-4 h-4" />
-            Create New Goal
-          </Button>
+          <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>
+              <Button className="bg-gradient-to-r from-primary to-secondary gap-2">
+              <Plus className="w-4 h-4" />
+              Create New Goal
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="glass-card border-white/10">
+              <DialogHeader>
+                <DialogTitle>Create Goal</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="title">Title</Label>
+                  <Input id="title" value={newGoal.title} onChange={(e) => setNewGoal((s) => ({ ...s, title: e.target.value }))} />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="target">Target (₹)</Label>
+                    <Input id="target" type="number" value={newGoal.target} onChange={(e) => setNewGoal((s) => ({ ...s, target: Number(e.target.value) }))} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="current">Current (₹)</Label>
+                    <Input id="current" type="number" value={newGoal.current} onChange={(e) => setNewGoal((s) => ({ ...s, current: Number(e.target.value) }))} />
+                  </div>
+                </div>
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label>Category</Label>
+                    <Select value={newGoal.category} onValueChange={(v) => setNewGoal((s) => ({ ...s, category: v }))}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Equipment">Equipment</SelectItem>
+                        <SelectItem value="Team">Team</SelectItem>
+                        <SelectItem value="Income">Income</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Status</Label>
+                    <Select value={newGoal.status} onValueChange={(v) => setNewGoal((s) => ({ ...s, status: v }))}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="In Progress">In Progress</SelectItem>
+                        <SelectItem value="On Track">On Track</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Color</Label>
+                    <Select value={newGoal.color} onValueChange={(v) => setNewGoal((s) => ({ ...s, color: v }))}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="primary">Primary</SelectItem>
+                        <SelectItem value="secondary">Secondary</SelectItem>
+                        <SelectItem value="accent">Accent</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label>Icon</Label>
+                  <Select value={newGoal.iconKey} onValueChange={(v) => setNewGoal((s) => ({ ...s, iconKey: v }))}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="camera">Camera</SelectItem>
+                      <SelectItem value="users">Users</SelectItem>
+                      <SelectItem value="laptop">Laptop</SelectItem>
+                      <SelectItem value="trending">Trending</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex justify-end">
+                  <Button onClick={addGoal} className="bg-gradient-to-r from-primary to-secondary">Add Goal</Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
         </motion.div>
 
         {/* Goals Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
           {goals.map((goal, index) => {
-            const percentage = Math.round((goal.current / goal.target) * 100);
-            const Icon = goal.icon;
+            const safeTarget = Number(goal.target) || 0;
+            const safeCurrent = Number(goal.current) || 0;
+            const percentage = safeTarget > 0 ? Math.max(0, Math.min(100, Math.round((safeCurrent / safeTarget) * 100))) : 0;
+            const Icon = goal.icon ?? iconMap[goal.iconKey ?? "camera"] ?? Camera;
+            const colorKey = (goal.color === "secondary" || goal.color === "accent") ? goal.color : "primary";
+            const colorClasses: Record<string, { wrap: string; icon: string }> = {
+              primary: { wrap: "from-primary/20 to-primary/10", icon: "text-primary" },
+              secondary: { wrap: "from-secondary/20 to-secondary/10", icon: "text-secondary" },
+              accent: { wrap: "from-accent/20 to-accent/10", icon: "text-accent" },
+            };
+            const cc = colorClasses[colorKey];
 
             return (
               <motion.div
@@ -97,8 +229,8 @@ const Goals = () => {
                   <CardHeader>
                     <div className="flex items-start justify-between">
                       <div className="flex items-start gap-4">
-                        <div className={`p-3 rounded-lg bg-gradient-to-br from-${goal.color}/20 to-${goal.color}/10`}>
-                          <Icon className={`w-6 h-6 text-${goal.color}`} />
+                        <div className={`p-3 rounded-lg bg-gradient-to-br ${cc.wrap}`}>
+                          <Icon className={`w-6 h-6 ${cc.icon}`} />
                         </div>
                         <div>
                           <CardTitle className="text-xl mb-1">{goal.title}</CardTitle>

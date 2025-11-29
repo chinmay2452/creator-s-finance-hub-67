@@ -1,7 +1,7 @@
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recharts";
 import { motion } from "framer-motion";
 
-const data = [
+const defaultData = [
   { name: "YouTube", value: 35, color: "#FF0000" },
   { name: "Instagram", value: 28, color: "#E1306C" },
   { name: "Freelancing", value: 22, color: "hsl(var(--secondary))" },
@@ -26,7 +26,18 @@ export const IncomeDistribution = () => {
       return [];
     }
   })();
-  const chartData = selectedPlatformNames.length ? data.filter((d) => selectedPlatformNames.includes(d.name)) : data;
+  const colors: Record<string, string> = {
+    YouTube: "#FF0000",
+    Instagram: "#E1306C",
+    TikTok: "#111111",
+    Snapchat: "#FFFC00",
+    Facebook: "#1877F2",
+    LinkedIn: "#0A66C2",
+    X: "#000000",
+  };
+  const chartData = selectedPlatformNames.length
+    ? selectedPlatformNames.map((name) => ({ name, value: 1, color: colors[name] || "hsl(var(--primary))" }))
+    : defaultData;
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}

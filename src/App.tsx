@@ -17,7 +17,17 @@ const queryClient = new QueryClient();
 
 const RequireProfile = ({ children }: { children: JSX.Element }) => {
   const hasProfile = typeof window !== "undefined" && !!localStorage.getItem("creatorProfile");
-  return hasProfile ? children : <Navigate to="/auth" replace />;
+  const authOk = (() => {
+    try {
+      const raw = localStorage.getItem("creatorAuth");
+      if (!raw) return false;
+      const a = JSON.parse(raw);
+      return !!a.loggedIn;
+    } catch {
+      return false;
+    }
+  })();
+  return hasProfile && authOk ? children : <Navigate to="/auth" replace />;
 };
 
 const App = () => (

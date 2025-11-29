@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Navbar } from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
@@ -26,49 +26,89 @@ const platforms = [
 ];
 
 const Auth = () => {
+  const [mode, setMode] = useState<"signup" | "login">("signup");
   const [step, setStep] = useState(1);
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [role, setRole] = useState<string>(roles[0].value);
   const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([]);
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [loginUsername, setLoginUsername] = useState("");
+  const [loginPassword, setLoginPassword] = useState("");
+  const [error, setError] = useState("");
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const m = params.get("mode");
+    if (m === "login") setMode("login");
+  }, []);
 
   const togglePlatform = (p: string) => {
     setSelectedPlatforms((prev) => (prev.includes(p) ? prev.filter((x) => x !== p) : [...prev, p]));
   };
 
   const canContinue = () => {
-    return name.trim() !== "" && email.trim() !== "" && phone.trim() !== "" && role.trim() !== "" && password.trim().length >= 6;
+    return (
+      name.trim() !== "" &&
+      email.trim() !== "" &&
+      phone.trim() !== "" &&
+      role.trim() !== "" &&
+      username.trim() !== "" &&
+      password.trim() !== ""
+    );
   };
 
   const finish = async () => {
-    const authEmail = email.trim();
-    const authPassword = password.trim();
-    let userId: string | null = null;
-    const signUp = await supabase.auth.signUp({ email: authEmail, password: authPassword });
-    if (signUp.error && signUp.error.message?.toLowerCase().includes("already")) {
-      const signIn = await supabase.auth.signInWithPassword({ email: authEmail, password: authPassword });
-      if (signIn.error) {
-        alert(`Login failed: ${signIn.error.message}`);
-        return;
+    const profile = { name, phone, email, role, platforms: selectedPlatforms, username };
+    try { localStorage.setItem("creatorProfile", JSON.stringify(profile)); } catch {}
+    try {
+      const { data, error } = await supabase.auth.signUp({ email, password, options: { data: { name, phone, role, platforms: selectedPlatforms, username } } });
+      if (error && !error.message.toLowerCase().includes("already")) throw error;
+      const userId = data?.user?.id || null;
+      if (userId) {
+        await supabase.from("profiles").upsert({ user_id: userId, name, phone, email, role, platforms: selectedPlatforms, username }, { onConflict: "user_id" });
       }
-      userId = signIn.data.user?.id || null;
-    } else {
-      userId = signUp.data.user?.id || null;
-    }
-    if (!userId) {
-      alert("Authentication failed or Supabase not configured. Saving local profile.");
-    }
-    const profile = { name, phone, email, role, platforms: selectedPlatforms };
-    try {
-      await supabase.from("profiles").upsert({ user_id: userId, display_name: name, goals: profile }, { onConflict: "user_id" });
     } catch {}
+    try { localStorage.setItem("creatorAuth", JSON.stringify({ username, password, loggedIn: false })); } catch {}
+    setMode("login");
+    setStep(1);
+  };
+
+  const login = async () => {
+    setError("");
     try {
-      localStorage.setItem("creatorProfile", JSON.stringify(profile));
-    } catch {}
-    navigate("/");
+      let ok = false;
+      try {
+        let emailToUse = loginUsername;
+        if (!/^[^@]+@[^@]+$/.test(loginUsername)) {
+          const { data: rows } = await supabase.from("profiles").select("email").eq("username", loginUsername).limit(1);
+          emailToUse = rows?.[0]?.email || loginUsername;
+        }
+        const { error } = await supabase.auth.signInWithPassword({ email: emailToUse, password: loginPassword });
+        if (error) throw error;
+        ok = true;
+      } catch (_se) {
+        const raw = localStorage.getItem("creatorAuth");
+        if (raw) {
+          const a = JSON.parse(raw);
+          if (a.username === loginUsername && a.password === loginPassword) ok = true;
+        }
+      }
+      if (ok) {
+        const raw = localStorage.getItem("creatorAuth");
+        const a = raw ? JSON.parse(raw) : { username: loginUsername, password: loginPassword };
+        localStorage.setItem("creatorAuth", JSON.stringify({ ...a, loggedIn: true }));
+        navigate("/");
+      } else {
+        setError("Invalid username or password");
+      }
+    } catch {
+      setError("An error occurred");
+    }
+  };
   };
 
   return (
@@ -77,12 +117,12 @@ const Auth = () => {
       <main className="mt-16 p-8 flex items-center justify-center">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-xl">
           <div className="glass-card rounded-2xl border border-white/10 p-6">
-            <div className="mb-6">
-              <h1 className="text-3xl font-bold text-foreground">Welcome</h1>
-              <p className="text-muted-foreground">Create your account to continue</p>
+            <div className="mb-6 flex items-center gap-3">
+              <Button variant={mode === "signup" ? "default" : "outline"} onClick={() => setMode("signup")}>Sign Up</Button>
+              <Button variant={mode === "login" ? "default" : "outline"} onClick={() => setMode("login")}>Login</Button>
             </div>
 
-            {step === 1 && (
+            {mode === "signup" && step === 1 && (
               <div className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="name">Name</Label>
@@ -97,10 +137,6 @@ const Auth = () => {
                   <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email address" />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="password">Password</Label>
-                  <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="At least 6 characters" />
-                </div>
-                <div className="space-y-2">
                   <Label>Role</Label>
                   <Select value={role} onValueChange={setRole}>
                     <SelectTrigger>
@@ -113,13 +149,21 @@ const Auth = () => {
                     </SelectContent>
                   </Select>
                 </div>
+                <div className="space-y-2">
+                  <Label htmlFor="username">Username</Label>
+                  <Input id="username" value={username} onChange={(e) => setUsername(e.target.value)} placeholder="Choose a username" />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="password">Password</Label>
+                  <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Choose a password" />
+                </div>
                 <div className="pt-2 flex justify-end">
                   <Button onClick={() => setStep(2)} disabled={!canContinue()} className="neon-glow">Continue</Button>
                 </div>
               </div>
             )}
 
-            {step === 2 && (
+            {mode === "signup" && step === 2 && (
               <div className="space-y-4">
                 <div>
                   <h2 className="text-xl font-semibold text-foreground">Select your platforms</h2>
@@ -136,6 +180,23 @@ const Auth = () => {
                 <div className="flex justify-between pt-2">
                   <Button variant="ghost" onClick={() => setStep(1)}>Back</Button>
                   <Button onClick={finish} className="neon-glow">Finish</Button>
+                </div>
+              </div>
+            )}
+
+            {mode === "login" && (
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="l-username">Username</Label>
+                  <Input id="l-username" value={loginUsername} onChange={(e) => setLoginUsername(e.target.value)} placeholder="Your username" />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="l-password">Password</Label>
+                  <Input id="l-password" type="password" value={loginPassword} onChange={(e) => setLoginPassword(e.target.value)} placeholder="Your password" />
+                </div>
+                {error && <p className="text-sm text-red-500">{error}</p>}
+                <div className="pt-2 flex justify-end">
+                  <Button onClick={login} className="neon-glow">Login</Button>
                 </div>
               </div>
             )}

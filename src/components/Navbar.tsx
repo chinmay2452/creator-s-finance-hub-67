@@ -1,9 +1,11 @@
 import { Bell, Moon, Sun, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 export const Navbar = () => {
   const [isDark, setIsDark] = useState(true);
+  const navigate = useNavigate();
 
   const toggleTheme = () => {
     setIsDark(!isDark);
@@ -39,7 +41,12 @@ export const Navbar = () => {
             <span className="absolute top-2 right-2 w-2 h-2 bg-secondary rounded-full animate-pulse-glow"></span>
           </Button>
 
-          <Button variant="ghost" size="icon" className="hover:bg-white/10">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="hover:bg-white/10"
+            onClick={() => navigate("/settings")}
+          >
             <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center">
               <User className="w-4 h-4 text-background" />
             </div>

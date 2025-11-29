@@ -19,7 +19,7 @@ export const ForecastCard = () => {
             Based on your current trajectory and market trends
           </p>
           <div className="flex items-baseline gap-2">
-            <span className="text-3xl font-bold text-gradient">$28,450</span>
+            <span className="text-3xl font-bold text-gradient">₹28,450</span>
             <span className="text-sm text-muted-foreground">predicted next month</span>
           </div>
           <div className="flex items-center gap-2 mt-3">
